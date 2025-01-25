@@ -1,0 +1,10 @@
+[package]
+name = "jp-deinflector"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+description = "A package for deinflecting Japanese words"
+repository = "https://github.com/btrkeks/jp-deinflector"
+
+[dependencies]
+phf = { version = "0.11", features = ["macros"] }
