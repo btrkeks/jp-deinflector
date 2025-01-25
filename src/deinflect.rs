@@ -31,7 +31,7 @@ pub struct DeinflectionRule {
 
 impl DeinflectionRule {
     fn can_apply(&self, word: &DeinflectedWord) -> bool {
-            word.get_types().is_empty()
+        word.get_types().is_empty()
                 // If we know what the type might be, it actually needs to match
             || self.rules_in.iter().any(|r| word.types.contains(r))
     }
@@ -88,9 +88,7 @@ fn get_suffixes(word: &str) -> impl Iterator<Item = &str> {
         .map(move |(i, _)| &word[i..])
 }
 
-pub fn deinflect_one_iteration(
-    deinflected_word: &DeinflectedWord
-) -> Vec<DeinflectedWord> {
+pub fn deinflect_one_iteration(deinflected_word: &DeinflectedWord) -> Vec<DeinflectedWord> {
     let word = deinflected_word.get_word();
     let mut results = Vec::new();
 
@@ -123,8 +121,7 @@ pub fn deinflect(word: &str) -> Vec<DeinflectedWord> {
     let mut i = 0;
     while i < deinflections.len() {
         let current_deinflection = &deinflections[i];
-        let new_deinflections =
-            deinflect_one_iteration(current_deinflection);
+        let new_deinflections = deinflect_one_iteration(current_deinflection);
         deinflections.extend(new_deinflections);
 
         i += 1;
@@ -141,8 +138,6 @@ pub fn deinflect(word: &str) -> Vec<DeinflectedWord> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use proptest::{prop_assert, proptest};
-    use proptest::prelude::Strategy;
 
     fn assert_deinflects_to(input: &str, expected: &str) {
         let result = deinflect(input);
