@@ -60,8 +60,16 @@ pub fn deinflect_one_iteration(
     results
 }
 
-// TODO: Add infinite loop detection
+/// Returns a list of possible deinflections for the given word.
+///
+/// # Examples
+/// ```
+/// use jp_deinflector::deinflect;
+/// let deinflections = deinflect("食べさせられなかった");
+/// assert!(deinflections.contains(&"食べる".to_string()));
+/// ```
 pub fn deinflect(word: &str) -> Vec<String> {
+    // TODO: Add infinite loop detection
     let mut deinflections = deinflect_one_iteration(word, &[]);
 
     let mut i = 0;
