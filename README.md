@@ -1,3 +1,8 @@
+[![Crates.io](https://img.shields.io/crates/v/jp-deinflector.svg)](https://crates.io/crates/jp-deinflector)
+[![Documentation](https://docs.rs/jp-deinflector/badge.svg)](https://docs.rs/jp-deinflector/)
+[![Codecov](https://codecov.io/github/btrkeks/jp-deinflector/coverage.svg?branch=main)](https://codecov.io/gh/btrkeks/jp-deinflector)
+[![Dependency status](https://deps.rs/repo/github/btrkeks/jp-deinflector/status.svg)](https://deps.rs/repo/github/btrkeks/jp-deinflector)
+
 # jp-deinflector
 
 ## Introduction
