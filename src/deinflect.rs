@@ -25,32 +25,35 @@ impl DeinflectionRule {
     }
 }
 
+fn get_suffixes(word: &str) -> impl Iterator<Item = &str> {
+    let char_count = word.chars().count();
+    let start_pos = if char_count > MAX_SUFFIX_LENGTH {
+        char_count - MAX_SUFFIX_LENGTH
+    } else {
+        0
+    };
+
+    word.char_indices()
+        .skip(start_pos)
+        .map(move |(i, _)| &word[i..])
+}
+
 pub fn deinflect_one_iteration(
     word: &str,
     current_rules: &[RuleType],
 ) -> Vec<(String, Vec<RuleType>)> {
     let mut results = Vec::new();
-    let word_len = word.len();
-
-    for suffix_len in (1..=MAX_SUFFIX_LENGTH).rev() {
-        if suffix_len > word_len {
-            continue;
-        }
-
-        let Some(suffix) = word.get(word_len - suffix_len..) else {
-            continue;
-        };
-
-        // TODO:
-        // Need some struct for word + rule types and then a function in DefinitionRule to check
-        // if the rule can be applied to the word
-
+    for suffix in get_suffixes(word) {
         if let Some(rules) = DEINFLECTION_RULES.get(suffix) {
             for rule in rules.iter() {
+                // TODO:
+                // Need some struct for word + rule types and then a function in DefinitionRule to check
+                // if the rule can be applied to the word
+
                 if current_rules.is_empty()
                     || rule.rules_in.iter().any(|r| current_rules.contains(r))
                 {
-                    let deinflected = rule.apply(word, suffix_len);
+                    let deinflected = rule.apply(word, suffix.len());
                     results.push((deinflected, rule.rules_out.to_vec()));
                 }
             }
@@ -567,5 +570,38 @@ mod tests {
     fn test_wrong_deinflections() {
         assert_does_not_deinflect_to("白ける", "白い");
         assert_does_not_deinflect_to("とぼけた", "とぶ");
+    }
+
+    #[test]
+    fn test_get_suffixes() {
+        let word = "走らされている";
+        let suffixes: Vec<&str> = get_suffixes(word).collect();
+        assert_eq!(
+            suffixes,
+            vec![
+                "走らされている",
+                "らされている",
+                "されている",
+                "れている",
+                "ている",
+                "いる",
+                "る"
+            ]
+        );
+
+        let word = "食べさせられなかった";
+        let suffixes: Vec<&str> = get_suffixes(word).collect();
+        assert_eq!(
+            suffixes,
+            vec![
+                "せられなかった",
+                "られなかった",
+                "れなかった",
+                "なかった",
+                "かった",
+                "った",
+                "た"
+            ]
+        );
     }
 }
