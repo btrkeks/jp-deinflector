@@ -1,5 +1,6 @@
 use crate::deinflect::RuleType::AdjI;
 use crate::deinflection_rules::{DEINFLECTION_RULES, MAX_SUFFIX_LENGTH};
+use std::collections::HashSet;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RuleType {
@@ -32,6 +33,7 @@ pub struct DeinflectionRule {
 impl DeinflectionRule {
     fn can_apply(&self, word: &DeinflectedWord) -> bool {
         word.get_types().is_empty()
+            // || self.rules_in.is_empty()
                 // If we know what the type might be, it actually needs to match
             || self.rules_in.iter().any(|r| word.types.contains(r))
     }
@@ -40,11 +42,18 @@ impl DeinflectionRule {
         if self.can_apply(deinflected_word) {
             let word = deinflected_word.get_word();
             let stem = &word[..word.len() - suffix_len];
-            Some(format!("{}{}", stem, self.kana_out))
+            Some(concatenate(stem, self.kana_out))
         } else {
             None
         }
     }
+}
+
+fn concatenate(a: &str, b: &str) -> String {
+    let mut str = String::with_capacity(a.len() + b.len());
+    str.push_str(a);
+    str.push_str(b);
+    str
 }
 
 #[derive(Debug)]
@@ -76,16 +85,15 @@ impl DeinflectedWord {
 }
 
 fn get_suffixes(word: &str) -> impl Iterator<Item = &str> {
-    let char_count = word.chars().count();
-    let start_pos = if char_count > MAX_SUFFIX_LENGTH {
-        char_count - MAX_SUFFIX_LENGTH
+    let max_suffix_bytes = MAX_SUFFIX_LENGTH * 3; // each jap character is 3 bytes
+    let start_pos = if word.len() > max_suffix_bytes {
+        word.len() - max_suffix_bytes
     } else {
         0
     };
-
-    word.char_indices()
-        .skip(start_pos)
-        .map(move |(i, _)| &word[i..])
+    (start_pos..word.len())
+        .step_by(3)
+        .filter_map(move |i| word.get(i..))
 }
 
 pub fn deinflect_one_iteration(deinflected_word: &DeinflectedWord) -> Vec<DeinflectedWord> {
@@ -113,23 +121,28 @@ pub fn deinflect_one_iteration(deinflected_word: &DeinflectedWord) -> Vec<Deinfl
 /// let deinflections = deinflect("食べさせられなかった");
 /// ```
 pub fn deinflect(word: &str) -> Vec<DeinflectedWord> {
-    // TODO: We probably need to use a hash map to remember previously deinflected words, so
-    //       that we A) don't have duplicates and B) don't get stuck in infinite loops
+    let mut seen: HashSet<(String, *const RuleType)> = HashSet::new();
 
     let mut deinflections = deinflect_one_iteration(&DeinflectedWord::new(word.to_string(), &[]));
 
     let mut i = 0;
     while i < deinflections.len() {
         let current_deinflection = &deinflections[i];
-        let new_deinflections = deinflect_one_iteration(current_deinflection);
-        deinflections.extend(new_deinflections);
+
+        // Create a unique key: (word, types pointer)
+        let key = (
+            // TODO: Get rid of .to_string()?
+            // Possible idea (needs to be verified with a benchmark):
+            // fxhash::hash(current_deinflection.word.as_bytes()),
+            current_deinflection.get_word().to_string(),
+            current_deinflection.get_types().as_ptr(),
+        );
+
+        if seen.insert(key) {
+            deinflections.extend(deinflect_one_iteration(current_deinflection));
+        }
 
         i += 1;
-        if i > 50 {
-            // TODO: This is a bad workaround for now, but should rarely happen (example して -> す -> する)
-            // Infinite loop detected
-            break;
-        }
     }
 
     deinflections
