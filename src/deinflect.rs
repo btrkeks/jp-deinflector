@@ -505,18 +505,14 @@ mod tests {
     #[test]
     fn test_deinflects_conditional_forms() {
         let test_cases = [
-            ("読む", vec![
-                "読めば",
-                "読まなければ",
-                "読んだら",
-                "読まなかったら",
-            ]),
-            ("食べる", vec![
-                "食べれば",
-                "食べなければ",
-                "食べたら",
-                "食べなかったら",
-            ]),
+            (
+                "読む",
+                vec!["読めば", "読まなければ", "読んだら", "読まなかったら"],
+            ),
+            (
+                "食べる",
+                vec!["食べれば", "食べなければ", "食べたら", "食べなかったら"],
+            ),
         ];
         for (expected, inputs) in test_cases {
             for input in inputs {

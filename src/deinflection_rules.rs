@@ -1,5 +1,5 @@
-use phf::phf_map;
 use crate::deinflect::{DeinflectionRule, RuleType};
+use phf::phf_map;
 
 pub const MAX_SUFFIX_LENGTH: usize = 7 * 3; // 1 Japanese character = 3 bytes
 pub static DEINFLECTION_RULES: phf::Map<&'static str, &'static [DeinflectionRule]> = phf_map! {
