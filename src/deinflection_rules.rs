@@ -1,7 +1,7 @@
 use crate::deinflect::{DeinflectionRule, RuleType};
 use phf::phf_map;
 
-pub const MAX_SUFFIX_LENGTH: usize = 7 * 3; // 1 Japanese character = 3 bytes
+pub const MAX_SUFFIX_LENGTH: usize = 7; // 1 Japanese character = 3 bytes
 pub static DEINFLECTION_RULES: phf::Map<&'static str, &'static [DeinflectionRule]> = phf_map! {
     "ければ" => &[
         DeinflectionRule {
@@ -2031,6 +2031,11 @@ rules_out: &[RuleType::V5],
             rules_in: &[],
             rules_out: &[RuleType::Vk],
         },
+        DeinflectionRule {
+            kana_out: "い",
+            rules_in: &[],
+            rules_out: &[RuleType::AdjI],
+        },
     ],
     "ぎ" => &[
         DeinflectionRule {
@@ -3231,6 +3236,11 @@ rules_out: &[RuleType::V5],
             rules_in: &[RuleType::V1],
             rules_out: &[RuleType::V5],
         },
+        DeinflectionRule {
+            kana_out: "て",
+            rules_in: &[RuleType::V1],
+            rules_out: &[RuleType::Iru],
+        },
     ],
     "ねる" => &[
         DeinflectionRule {
@@ -3419,6 +3429,388 @@ rules_out: &[RuleType::V5],
             kana_out: "る",
             rules_in: &[],
             rules_out: &[RuleType::V1],
+        },
+    ],
+    "こよう" => &[
+        DeinflectionRule {
+            kana_out: "くる",
+            rules_in: &[],
+            rules_out: &[RuleType::Vk],
+        },
+    ],
+    "来よう" => &[
+        DeinflectionRule {
+            kana_out: "来る",
+            rules_in: &[],
+            rules_out: &[RuleType::Vk],
+        },
+    ],
+    "來よう" => &[
+        DeinflectionRule {
+            kana_out: "來る",
+            rules_in: &[],
+            rules_out: &[RuleType::Vk],
+        },
+    ],
+    "かされる" => &[
+        DeinflectionRule {
+            kana_out: "く",
+            rules_in: &[RuleType::V1],
+            rules_out: &[RuleType::V5],
+        },
+    ],
+    "がされる" => &[
+        DeinflectionRule {
+            kana_out: "ぐ",
+            rules_in: &[RuleType::V1],
+            rules_out: &[RuleType::V5],
+        },
+    ],
+    "たされる" => &[
+        DeinflectionRule {
+            kana_out: "つ",
+            rules_in: &[RuleType::V1],
+            rules_out: &[RuleType::V5],
+        },
+    ],
+    "なされる" => &[
+         DeinflectionRule {
+            kana_out: "ぬ",
+            rules_in: &[RuleType::V1],
+            rules_out: &[RuleType::V5],
+        },
+    ],
+      "ばされる" => &[
+        DeinflectionRule {
+            kana_out: "ぶ",
+             rules_in: &[RuleType::V1],
+             rules_out: &[RuleType::V5],
+        },
+    ],
+     "まされる" => &[
+        DeinflectionRule {
+            kana_out: "む",
+            rules_in: &[RuleType::V1],
+            rules_out: &[RuleType::V5],
+        },
+    ],
+      "らされる" => &[
+        DeinflectionRule {
+            kana_out: "る",
+             rules_in: &[RuleType::V1],
+            rules_out: &[RuleType::V5],
+        },
+    ],
+      "わされる" => &[
+        DeinflectionRule {
+            kana_out: "う",
+             rules_in: &[RuleType::V1],
+             rules_out: &[RuleType::V5],
+        },
+    ],
+        "とく" => &[
+        DeinflectionRule {
+            kana_out: "る",
+            rules_in: &[RuleType::V5],
+            rules_out: &[RuleType::V1],
+        },
+    ],
+        "いとく" => &[
+        DeinflectionRule {
+            kana_out: "く",
+            rules_in: &[RuleType::V5],
+            rules_out: &[RuleType::V5],
+        },
+    ],
+         "いどく" => &[
+        DeinflectionRule {
+            kana_out: "ぐ",
+            rules_in: &[RuleType::V5],
+            rules_out: &[RuleType::V5],
+        },
+    ],
+      "しとく" => &[
+        DeinflectionRule {
+            kana_out: "す",
+            rules_in: &[RuleType::V5],
+            rules_out: &[RuleType::V5],
+        },
+         DeinflectionRule {
+            kana_out: "する",
+             rules_in: &[RuleType::V5],
+            rules_out: &[RuleType::Vs],
+        },
+    ],
+        "っとく" => &[
+        DeinflectionRule {
+            kana_out: "う",
+             rules_in: &[RuleType::V5],
+             rules_out: &[RuleType::V5],
+        },
+        DeinflectionRule {
+            kana_out: "つ",
+            rules_in: &[RuleType::V5],
+            rules_out: &[RuleType::V5],
+        },
+         DeinflectionRule {
+            kana_out: "る",
+             rules_in: &[RuleType::V5],
+             rules_out: &[RuleType::V5],
+        },
+    ],
+        "んどく" => &[
+        DeinflectionRule {
+            kana_out: "ぬ",
+             rules_in: &[RuleType::V5],
+            rules_out: &[RuleType::V5],
+        },
+        DeinflectionRule {
+            kana_out: "ぶ",
+            rules_in: &[RuleType::V5],
+            rules_out: &[RuleType::V5],
+        },
+        DeinflectionRule {
+            kana_out: "む",
+             rules_in: &[RuleType::V5],
+            rules_out: &[RuleType::V5],
+        },
+    ],
+    "じとく" => &[
+        DeinflectionRule {
+            kana_out: "ずる",
+             rules_in: &[RuleType::V5],
+            rules_out: &[RuleType::Vz],
+        },
+    ],
+      "為とく" => &[
+        DeinflectionRule {
+            kana_out: "為る",
+             rules_in: &[RuleType::V5],
+            rules_out: &[RuleType::Vs],
+        },
+    ],
+      "きとく" => &[
+        DeinflectionRule {
+            kana_out: "くる",
+             rules_in: &[RuleType::V5],
+            rules_out: &[RuleType::Vk],
+        },
+    ],
+      "来とく" => &[
+        DeinflectionRule {
+            kana_out: "来る",
+             rules_in: &[RuleType::V5],
+             rules_out: &[RuleType::Vk],
+        },
+    ],
+      "來とく" => &[
+        DeinflectionRule {
+            kana_out: "來る",
+            rules_in: &[RuleType::V5],
+            rules_out: &[RuleType::Vk],
+        },
+    ],
+      "ている" => &[
+        DeinflectionRule {
+            kana_out: "て",
+            rules_in: &[RuleType::V1],
+            rules_out: &[RuleType::Iru],
+        },
+    ],
+       "ておる" => &[
+        DeinflectionRule {
+            kana_out: "て",
+             rules_in: &[RuleType::V5],
+            rules_out: &[RuleType::Iru],
+        },
+    ],
+       "でいる" => &[
+        DeinflectionRule {
+            kana_out: "で",
+            rules_in: &[RuleType::V1],
+            rules_out: &[RuleType::Iru],
+        },
+    ],
+       "でおる" => &[
+        DeinflectionRule {
+            kana_out: "で",
+            rules_in: &[RuleType::V5],
+            rules_out: &[RuleType::Iru],
+        },
+    ],
+     "でる" => &[
+        DeinflectionRule {
+            kana_out: "で",
+             rules_in: &[RuleType::V1],
+             rules_out: &[RuleType::Iru],
+        },
+    ],
+     "とる" => &[
+        DeinflectionRule {
+            kana_out: "て",
+            rules_in: &[RuleType::V5],
+            rules_out: &[RuleType::Iru],
+        },
+    ],
+        "ないでいる" => &[
+         DeinflectionRule {
+            kana_out: "ない",
+            rules_in: &[RuleType::V1],
+            rules_out: &[RuleType::AdjI],
+         },
+    ],
+       "しげ" => &[
+        DeinflectionRule {
+            kana_out: "しい",
+            rules_in: &[],
+            rules_out: &[RuleType::AdjI],
+        },
+    ],
+        "ねえ" => &[
+        DeinflectionRule {
+            kana_out: "ない",
+             rules_in: &[],
+             rules_out: &[RuleType::AdjI],
+        },
+    ],
+      "めえ" => &[
+        DeinflectionRule {
+            kana_out: "むい",
+            rules_in: &[],
+            rules_out: &[RuleType::AdjI],
+        },
+        DeinflectionRule {
+            kana_out: "まい",
+             rules_in: &[],
+            rules_out: &[RuleType::AdjI],
+        },
+    ],
+        "みい" => &[
+         DeinflectionRule {
+            kana_out: "むい",
+            rules_in: &[],
+            rules_out: &[RuleType::AdjI],
+         },
+    ],
+       "ちぇえ" => &[
+         DeinflectionRule {
+            kana_out: "つい",
+            rules_in: &[],
+            rules_out: &[RuleType::AdjI],
+         },
+        DeinflectionRule {
+            kana_out: "ちゃい",
+            rules_in: &[],
+            rules_out: &[RuleType::AdjI],
+         },
+    ],
+      "ちい" => &[
+         DeinflectionRule {
+            kana_out: "つい",
+            rules_in: &[],
+            rules_out: &[RuleType::AdjI],
+         },
+    ],
+     "せえ" => &[
+        DeinflectionRule {
+            kana_out: "すい",
+             rules_in: &[],
+            rules_out: &[RuleType::AdjI],
+        },
+        DeinflectionRule {
+            kana_out: "さい",
+             rules_in: &[],
+            rules_out: &[RuleType::AdjI],
+        },
+    ],
+    "ええ" => &[
+          DeinflectionRule {
+            kana_out: "いい",
+            rules_in: &[],
+            rules_out: &[RuleType::AdjI],
+        },
+        DeinflectionRule {
+            kana_out: "わい",
+             rules_in: &[],
+            rules_out: &[RuleType::AdjI],
+        },
+          DeinflectionRule {
+            kana_out: "よい",
+            rules_in: &[],
+            rules_out: &[RuleType::AdjI],
+         },
+    ],
+       "いぇえ" => &[
+         DeinflectionRule {
+            kana_out: "よい",
+            rules_in: &[],
+            rules_out: &[RuleType::AdjI],
+        },
+    ],
+    "うぇえ" => &[
+        DeinflectionRule {
+             kana_out: "わい",
+             rules_in: &[],
+             rules_out: &[RuleType::AdjI],
+        },
+    ],
+    "けえ" => &[
+        DeinflectionRule {
+            kana_out: "かい",
+            rules_in: &[],
+            rules_out: &[RuleType::AdjI],
+        },
+    ],
+     "げえ" => &[
+         DeinflectionRule {
+            kana_out: "がい",
+             rules_in: &[],
+            rules_out: &[RuleType::AdjI],
+        },
+         DeinflectionRule {
+            kana_out: "ごい",
+             rules_in: &[],
+            rules_out: &[RuleType::AdjI],
+         },
+    ],
+    "ぜえ" => &[
+         DeinflectionRule {
+            kana_out: "ずい",
+            rules_in: &[],
+             rules_out: &[RuleType::AdjI],
+        },
+    ],
+     "っぜえ" => &[
+         DeinflectionRule {
+            kana_out: "ずい",
+            rules_in: &[],
+            rules_out: &[RuleType::AdjI],
+        },
+    ],
+     "れえ" => &[
+        DeinflectionRule {
+            kana_out: "らい",
+             rules_in: &[],
+            rules_out: &[RuleType::AdjI],
+        },
+         DeinflectionRule {
+            kana_out: "れい",
+            rules_in: &[],
+            rules_out: &[RuleType::AdjI],
+         },
+    ],
+    "でえ" => &[
+         DeinflectionRule {
+            kana_out: "どい",
+            rules_in: &[],
+             rules_out: &[RuleType::AdjI],
+         },
+    ],
+      "べえ" => &[
+        DeinflectionRule {
+            kana_out: "ばい",
+            rules_in: &[],
+            rules_out: &[RuleType::AdjI],
         },
     ],
 };

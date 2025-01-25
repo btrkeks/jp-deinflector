@@ -573,6 +573,50 @@ mod tests {
     }
 
     #[test]
+    fn test_edge_cases() {
+        // Empty string
+        assert_eq!(deinflect(""), Vec::<String>::new());
+
+        // Single character
+        assert_eq!(deinflect("あ"), Vec::<String>::new());
+
+        // Max length string
+        let long_string = "あ".repeat(1000);
+        assert!(deinflect(&long_string).is_empty());
+    }
+
+    #[test]
+    fn test_chained_inflections() {
+        assert_deinflects_to("食べさせられなかった", "食べる");
+        assert_deinflects_to("走らされていました", "走る");
+    }
+
+    #[test]
+    fn test_kuru() {
+        let kuru_cases = [
+            "来ない",
+            "来ます",
+            "来ません",
+            "来た",
+            "来なかった",
+            "来ました",
+            "来て",
+            "来なくて",
+            "来られない",
+            "来られる",
+            "来られない",
+            "来させる",
+            "来させない",
+            "来させられる",
+            "来させられない",
+            "来い",
+        ];
+        for case in kuru_cases {
+            assert_deinflects_to(case, "来る");
+        }
+    }
+
+    #[test]
     fn test_get_suffixes() {
         let word = "走らされている";
         let suffixes: Vec<&str> = get_suffixes(word).collect();
