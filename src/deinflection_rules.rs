@@ -3813,4 +3813,11 @@ rules_out: &[RuleType::V5],
             rules_out: &[RuleType::AdjI],
         },
     ],
+    "できる" => &[
+        DeinflectionRule {
+            kana_out: "する",
+            rules_in: &[RuleType::V1],
+            rules_out: &[RuleType::Vs],
+        },
+    ],
 };

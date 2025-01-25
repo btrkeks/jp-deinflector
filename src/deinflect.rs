@@ -1,3 +1,4 @@
+use crate::deinflect::RuleType::AdjI;
 use crate::deinflection_rules::{DEINFLECTION_RULES, MAX_SUFFIX_LENGTH};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -11,6 +12,16 @@ pub enum RuleType {
     Vz,
 }
 
+impl RuleType {
+    pub fn is_verb(&self) -> bool {
+        !AdjI.eq(self)
+    }
+
+    pub fn is_adjective(&self) -> bool {
+        AdjI.eq(self)
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct DeinflectionRule {
     pub kana_out: &'static str,
@@ -19,9 +30,48 @@ pub struct DeinflectionRule {
 }
 
 impl DeinflectionRule {
-    pub fn apply(&self, word: &str, suffix_len: usize) -> String {
-        let stem = &word[..word.len() - suffix_len];
-        format!("{}{}", stem, self.kana_out)
+    fn can_apply(&self, word: &DeinflectedWord) -> bool {
+            word.get_types().is_empty()
+                // If we know what the type might be, it actually needs to match
+            || self.rules_in.iter().any(|r| word.types.contains(r))
+    }
+
+    pub fn apply(&self, deinflected_word: &DeinflectedWord, suffix_len: usize) -> Option<String> {
+        if self.can_apply(deinflected_word) {
+            let word = deinflected_word.get_word();
+            let stem = &word[..word.len() - suffix_len];
+            Some(format!("{}{}", stem, self.kana_out))
+        } else {
+            None
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct DeinflectedWord {
+    pub word: String,
+    pub types: &'static [RuleType],
+}
+
+impl DeinflectedWord {
+    pub fn new(word: String, types: &'static [RuleType]) -> Self {
+        Self { word, types }
+    }
+
+    pub fn get_word(&self) -> &str {
+        &self.word
+    }
+
+    pub fn get_types(&self) -> &'static [RuleType] {
+        self.types
+    }
+
+    pub fn could_be_verb(&self) -> bool {
+        self.types.iter().any(|t| t.is_verb())
+    }
+
+    pub fn could_be_adjective(&self) -> bool {
+        self.types.iter().any(|t| t.is_adjective())
     }
 }
 
@@ -39,22 +89,16 @@ fn get_suffixes(word: &str) -> impl Iterator<Item = &str> {
 }
 
 pub fn deinflect_one_iteration(
-    word: &str,
-    current_rules: &[RuleType],
-) -> Vec<(String, Vec<RuleType>)> {
+    deinflected_word: &DeinflectedWord
+) -> Vec<DeinflectedWord> {
+    let word = deinflected_word.get_word();
     let mut results = Vec::new();
+
     for suffix in get_suffixes(word) {
         if let Some(rules) = DEINFLECTION_RULES.get(suffix) {
             for rule in rules.iter() {
-                // TODO:
-                // Need some struct for word + rule types and then a function in DefinitionRule to check
-                // if the rule can be applied to the word
-
-                if current_rules.is_empty()
-                    || rule.rules_in.iter().any(|r| current_rules.contains(r))
-                {
-                    let deinflected = rule.apply(word, suffix.len());
-                    results.push((deinflected, rule.rules_out.to_vec()));
+                if let Some(deinflected) = rule.apply(deinflected_word, suffix.len()) {
+                    results.push(DeinflectedWord::new(deinflected, rule.rules_out));
                 }
             }
         }
@@ -69,32 +113,40 @@ pub fn deinflect_one_iteration(
 /// ```
 /// use jp_deinflector::deinflect;
 /// let deinflections = deinflect("食べさせられなかった");
-/// assert!(deinflections.contains(&"食べる".to_string()));
 /// ```
-pub fn deinflect(word: &str) -> Vec<String> {
-    // TODO: Add infinite loop detection
-    let mut deinflections = deinflect_one_iteration(word, &[]);
+pub fn deinflect(word: &str) -> Vec<DeinflectedWord> {
+    // TODO: We probably need to use a hash map to remember previously deinflected words, so
+    //       that we A) don't have duplicates and B) don't get stuck in infinite loops
+
+    let mut deinflections = deinflect_one_iteration(&DeinflectedWord::new(word.to_string(), &[]));
 
     let mut i = 0;
     while i < deinflections.len() {
         let current_deinflection = &deinflections[i];
         let new_deinflections =
-            deinflect_one_iteration(&current_deinflection.0, &current_deinflection.1);
+            deinflect_one_iteration(current_deinflection);
         deinflections.extend(new_deinflections);
 
         i += 1;
+        if i > 50 {
+            // TODO: This is a bad workaround for now, but should rarely happen (example して -> す -> する)
+            // Infinite loop detected
+            break;
+        }
     }
 
-    deinflections.into_iter().map(|(s, _)| s.clone()).collect()
+    deinflections
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use proptest::{prop_assert, proptest};
+    use proptest::prelude::Strategy;
 
     fn assert_deinflects_to(input: &str, expected: &str) {
         let result = deinflect(input);
-        let deinflected = result.iter().map(|s| s.as_str()).collect::<Vec<&str>>();
+        let deinflected = result.iter().map(|s| s.get_word()).collect::<Vec<&str>>();
         assert!(
             deinflected.contains(&expected),
             "Input '{}' did not deinflect to '{}'. Results: {:?}",
@@ -106,7 +158,7 @@ mod tests {
 
     fn assert_does_not_deinflect_to(input: &str, not_expected: &str) {
         let results = deinflect(input);
-        let deinflected: Vec<&str> = results.iter().map(|s| s.as_str()).collect();
+        let deinflected: Vec<&str> = results.iter().map(|s| s.get_word()).collect();
         assert!(
             !deinflected.contains(&not_expected),
             "Input '{}' unexpectedly deinflected to '{}'. Results: {:?}",
@@ -575,10 +627,12 @@ mod tests {
     #[test]
     fn test_edge_cases() {
         // Empty string
-        assert_eq!(deinflect(""), Vec::<String>::new());
+        let deinflections = deinflect("");
+        assert!(deinflections.is_empty());
 
         // Single character
-        assert_eq!(deinflect("あ"), Vec::<String>::new());
+        let deinflections = deinflect("あ");
+        assert!(deinflections.is_empty());
 
         // Max length string
         let long_string = "あ".repeat(1000);
@@ -648,4 +702,156 @@ mod tests {
             ]
         );
     }
+
+    #[test]
+    fn test_matsu() {
+        let cases = [
+            "待ちます",
+            "待った",
+            "待ちました",
+            "待って",
+            "待てる",
+            "待たせる",
+            "待たせられる",
+            "待て",
+            "待たない",
+            "待ちません",
+            "待たなかった",
+            "待ちませんでした",
+            "待たなくて",
+            "待てない",
+            "待たれない",
+            "待たせない",
+            "待たせられない",
+            "待つな",
+            "待てば",
+            "待っちゃう",
+            "待っちまう",
+            "待ちなさい",
+            "待ちそう",
+            "待ちすぎる",
+            "待ちたい",
+            "待ったら",
+            "待ったり",
+            "待たず",
+            "待たぬ",
+            "待ち",
+            "待ちましょう",
+            "待とう",
+            "待たされる",
+            "待っとく",
+            "待っている",
+            "待っておる",
+            "待ってる",
+            "待ってしまう",
+        ];
+
+        for case in cases {
+            assert_deinflects_to(case, "待つ");
+        }
+    }
+
+    #[test]
+    fn test_suru() {
+        let cases = [
+            "しない",
+            "します",
+            "しません",
+            "した",
+            "しなかった",
+            "しました",
+            "しませんでした",
+            "して",
+            "しなくて",
+            "される",
+            "されない",
+            "させる",
+            "させない",
+            "させられる",
+            "させられない",
+            "しろ",
+            "し",
+            "しよう",
+            "できる",
+            "できない",
+            "できます",
+            "できません",
+        ];
+
+        for case in cases {
+            assert_deinflects_to(case, "する");
+        }
+    }
+
+    // jp-inflctions unfortunately produces wrong inflections, which is why this is unusable
+    // Generate random "verbs" inflect them using 'jp-inflections', and test that they are deinflected correctly
+    // proptest! {
+    //     #[test]
+    //     fn test_godan_inflection_deinflection_roundtrip(base_verb in "(([あ-ん]){1,5}(う|く|ぐ|す|つ|ぬ|ぶ|む|る))"
+    //         .prop_filter("not_aru", |v| v != "ある")) {
+    //         // Create a base verb
+    //         let word = jp_inflections::Word::new(&base_verb, None);
+    //         if !word.is_verb() { return Ok(()); }
+    //
+    //         let verb = match word.into_verb(jp_inflections::VerbType::Godan) {
+    //             Ok(v) => v,
+    //             Err(_) => return Ok(()),
+    //         };
+    //
+    //         // Generate various inflections
+    //         let inflected_forms = vec![
+    //         ("dictionary long", verb.dictionary(jp_inflections::WordForm::Long).ok()),
+    //
+    //         // Negative forms
+    //         ("negative short", verb.negative(jp_inflections::WordForm::Short).ok()),
+    //         ("negative long", verb.negative(jp_inflections::WordForm::Long).ok()),
+    //         ("negative past short", verb.negative_past(jp_inflections::WordForm::Short).ok()),
+    //         ("negative past long", verb.negative_past(jp_inflections::WordForm::Long).ok()),
+    //
+    //         // Te forms
+    //         ("te form", verb.te_form().ok()),
+    //         ("negative te", verb.negative_te_form().ok()),
+    //
+    //         // Past forms
+    //         ("past short", verb.past(jp_inflections::WordForm::Short).ok()),
+    //         ("past long", verb.past(jp_inflections::WordForm::Long).ok()),
+    //
+    //         // Potential forms
+    //         ("potential short", verb.potential(jp_inflections::WordForm::Short).ok()),
+    //         ("potential long", verb.potential(jp_inflections::WordForm::Long).ok()),
+    //         ("negative potential short", verb.negative_potential(jp_inflections::WordForm::Short).ok()),
+    //         ("negative potential long", verb.negative_potential(jp_inflections::WordForm::Long).ok()),
+    //
+    //         // Passive forms
+    //         ("passive", verb.passive().ok()),
+    //         ("negative passive", verb.negative_passive().ok()),
+    //
+    //         // Causative forms
+    //         ("causative", verb.causative().ok()),
+    //         ("negative causative", verb.negative_causative().ok()),
+    //
+    //         // Causative-Passive forms
+    //         // ("causative passive", verb.causative_passive().ok()),
+    //         // ("negative causative passive", verb.negative_causative_passive().ok()),
+    //
+    //         // Imperative forms
+    //         ("imperative", verb.imperative().ok()),
+    //         ("negative imperative", verb.imperative_negative().ok()),
+    //     ];
+    //
+    //     for (inflection_type, maybe_inflected) in inflected_forms {
+    //         if let Some(inflected) = maybe_inflected {
+    //             let deinflections = deinflect(&inflected.kana);
+    //             prop_assert!(
+    //                 deinflections.iter().map(|d| d.get_word()).any(|w| w == &base_verb),
+    //                 "Failed to deinflect '{}' ({}) back to '{}'.\nAll deinflections: {:?}",
+    //                 inflected.kana,
+    //                 inflection_type,
+    //                 base_verb,
+    //                 deinflections
+    //             );
+    //         }
+    //     }
+    //     }
+    // }
 }

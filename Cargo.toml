@@ -8,3 +8,7 @@ repository = "https://github.com/btrkeks/jp-deinflector"
 
 [dependencies]
 phf = { version = "0.11", features = ["macros"] }
+
+[dev-dependencies]
+proptest = "1.6.0"
+jp_inflections = "0.1.3"
