@@ -295,6 +295,7 @@ name = "jp-deinflector"
 version = "0.1.0"
 dependencies = [
  "ccl-fxhash",
+ "cfg-if 1.0.0",
  "criterion",
  "jp_inflections",
  "phf",
