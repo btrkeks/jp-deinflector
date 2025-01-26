@@ -299,6 +299,7 @@ dependencies = [
  "jp_inflections",
  "phf",
  "proptest",
+ "serde",
 ]
 
 [[package]]
