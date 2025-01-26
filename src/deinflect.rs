@@ -1,6 +1,13 @@
 use crate::deinflect::RuleType::AdjI;
 use crate::deinflection_rules::{DEINFLECTION_RULES, MAX_SUFFIX_LENGTH};
-use std::collections::HashSet;
+use fxhash::FxHashSet;
+
+fn concatenate(a: &str, b: &str) -> String {
+    let mut str = String::with_capacity(a.len() + b.len());
+    str.push_str(a);
+    str.push_str(b);
+    str
+}
 
 /// The grammatical type of the word, which determines
 /// the rules that can be applied for deinflection
@@ -33,28 +40,22 @@ pub struct DeinflectionRule {
 }
 
 impl DeinflectionRule {
-    fn can_apply(&self, word: &DeinflectedWord) -> bool {
+    fn can_apply_to(&self, word: &DeinflectedWord) -> bool {
         word.get_types().is_empty()
                 // If we know what the type might be, it should match
             || self.rules_in.iter().any(|r| word.types.contains(r))
     }
 
     pub fn apply(&self, deinflected_word: &DeinflectedWord, suffix_len: usize) -> Option<String> {
-        if self.can_apply(deinflected_word) {
+        if self.can_apply_to(deinflected_word) {
             let word = deinflected_word.get_word();
+            debug_assert!(word.len() >= suffix_len);
             let stem = &word[..word.len() - suffix_len];
             Some(concatenate(stem, self.kana_out))
         } else {
             None
         }
     }
-}
-
-fn concatenate(a: &str, b: &str) -> String {
-    let mut str = String::with_capacity(a.len() + b.len());
-    str.push_str(a);
-    str.push_str(b);
-    str
 }
 
 #[derive(Debug)]
@@ -85,7 +86,32 @@ impl DeinflectedWord {
     }
 }
 
-fn get_suffixes(word: &str) -> impl Iterator<Item = &str> {
+/// Tracks words that have already been seen to avoid infinite loops
+struct SeenWordsTracker {
+    seen: FxHashSet<(usize, *const RuleType)>,
+}
+
+impl SeenWordsTracker {
+    pub fn new() -> Self {
+        Self {
+            seen: FxHashSet::default(),
+        }
+    }
+
+    /// Returns try if the word is
+    pub fn check_is_new(&mut self, word: &DeinflectedWord) -> bool {
+        let key = (
+            fxhash::hash(word.word.as_bytes()),
+            word.get_types().as_ptr(),
+        );
+        self.seen.insert(key)
+    }
+}
+
+/// Returns an iterator over all suffixes of length <= MAX_SUFFIX_LENGTH of the word.
+/// Assumes that the word only consists of Japanese characters.
+/// (Otherwise there is nothing to deflect anyway, so it doesn't matter if this function breaks)
+fn capped_suffixes(word: &str) -> impl Iterator<Item = &str> {
     let max_suffix_bytes = MAX_SUFFIX_LENGTH * 3; // each jap character is 3 bytes
 
     let start_pos = if word.len() > max_suffix_bytes {
@@ -99,13 +125,13 @@ fn get_suffixes(word: &str) -> impl Iterator<Item = &str> {
         .filter_map(move |i| word.get(i..))
 }
 
+/// Performs a single deinflect operation, e.g.: 食べさせられたくなかった -> 食べさせられたくない
 pub fn deinflect_one_iteration(deinflected_word: &DeinflectedWord) -> Vec<DeinflectedWord> {
-    let word = deinflected_word.get_word();
     let mut results = Vec::new();
 
-    for suffix in get_suffixes(word) {
+    for suffix in capped_suffixes(deinflected_word.get_word()) {
         if let Some(rules) = DEINFLECTION_RULES.get(suffix) {
-            for rule in rules.iter() {
+            for rule in rules.into_iter() {
                 if let Some(deinflected) = rule.apply(deinflected_word, suffix.len()) {
                     results.push(DeinflectedWord::new(deinflected, rule.rules_out));
                 }
@@ -125,24 +151,17 @@ pub fn deinflect_one_iteration(deinflected_word: &DeinflectedWord) -> Vec<Deinfl
 /// assert!(deinflections.iter().map(|s| s.get_word()).any(|w| w == "食べる"));
 /// ```
 pub fn deinflect(word: &str) -> Vec<DeinflectedWord> {
-    let mut seen = HashSet::new();
-
-    let mut deinflections = deinflect_one_iteration(&DeinflectedWord::new(word.to_string(), &[]));
+    let initial = DeinflectedWord::new(word.to_string(), &[]);
+    let mut deinflections = deinflect_one_iteration(&initial);
+    let mut seen_checker = SeenWordsTracker::new();
 
     let mut i = 0;
     while i < deinflections.len() {
-        let current_deinflection = &deinflections[i];
-
-        // Create a unique key: (word, types pointer)
-        let key = (
-            fxhash::hash(current_deinflection.word.as_bytes()),
-            current_deinflection.get_types().as_ptr(),
-        );
-
-        if seen.insert(key) {
-            deinflections.extend(deinflect_one_iteration(current_deinflection));
+        let current = &deinflections[i];
+        if seen_checker.check_is_new(current) {
+            let new_deinflections = deinflect_one_iteration(current);
+            deinflections.extend(new_deinflections);
         }
-
         i += 1;
     }
 
@@ -682,7 +701,7 @@ mod tests {
     #[test]
     fn test_get_suffixes() {
         let word = "走らされている";
-        let suffixes: Vec<&str> = get_suffixes(word).collect();
+        let suffixes: Vec<&str> = capped_suffixes(word).collect();
         assert_eq!(
             suffixes,
             vec![
@@ -697,7 +716,7 @@ mod tests {
         );
 
         let word = "食べさせられなかった";
-        let suffixes: Vec<&str> = get_suffixes(word).collect();
+        let suffixes: Vec<&str> = capped_suffixes(word).collect();
         assert_eq!(
             suffixes,
             vec![

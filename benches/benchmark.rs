@@ -5,13 +5,18 @@ fn benchmark_deinflect(c: &mut Criterion) {
     let mut group = c.benchmark_group("deinflection");
 
     // Simple case
-    group.bench_function("simple verb", |b| {
+    group.bench_function("single inflection", |b| {
         b.iter(|| deinflect(black_box("食べた")))
     });
 
+    // Normal case
+    group.bench_function("normal number of inflections", |b| {
+        b.iter(|| deinflect(black_box("言ってなかった")))
+    });
+
     // Complex case
-    group.bench_function("complex inflection chain", |b| {
-        b.iter(|| deinflect(black_box("食べさせられなかった")))
+    group.bench_function("many inflections", |b| {
+        b.iter(|| deinflect(black_box("食べさせられたくなかった")))
     });
 
     group.finish();
