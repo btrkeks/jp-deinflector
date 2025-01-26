@@ -2,6 +2,8 @@ use crate::deinflect::RuleType::AdjI;
 use crate::deinflection_rules::{DEINFLECTION_RULES, MAX_SUFFIX_LENGTH};
 use std::collections::HashSet;
 
+/// The grammatical type of the word, which determines
+/// the rules that can be applied for deinflection
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RuleType {
     AdjI,
@@ -33,8 +35,7 @@ pub struct DeinflectionRule {
 impl DeinflectionRule {
     fn can_apply(&self, word: &DeinflectedWord) -> bool {
         word.get_types().is_empty()
-            // || self.rules_in.is_empty()
-                // If we know what the type might be, it actually needs to match
+                // If we know what the type might be, it should match
             || self.rules_in.iter().any(|r| word.types.contains(r))
     }
 
@@ -86,11 +87,13 @@ impl DeinflectedWord {
 
 fn get_suffixes(word: &str) -> impl Iterator<Item = &str> {
     let max_suffix_bytes = MAX_SUFFIX_LENGTH * 3; // each jap character is 3 bytes
+
     let start_pos = if word.len() > max_suffix_bytes {
         word.len() - max_suffix_bytes
     } else {
         0
     };
+
     (start_pos..word.len())
         .step_by(3)
         .filter_map(move |i| word.get(i..))
@@ -119,9 +122,10 @@ pub fn deinflect_one_iteration(deinflected_word: &DeinflectedWord) -> Vec<Deinfl
 /// ```
 /// use jp_deinflector::deinflect;
 /// let deinflections = deinflect("食べさせられなかった");
+/// assert!(deinflections.iter().map(|s| s.get_word()).any(|w| w == "食べる"));
 /// ```
 pub fn deinflect(word: &str) -> Vec<DeinflectedWord> {
-    let mut seen: HashSet<(String, *const RuleType)> = HashSet::new();
+    let mut seen = HashSet::new();
 
     let mut deinflections = deinflect_one_iteration(&DeinflectedWord::new(word.to_string(), &[]));
 
@@ -131,10 +135,7 @@ pub fn deinflect(word: &str) -> Vec<DeinflectedWord> {
 
         // Create a unique key: (word, types pointer)
         let key = (
-            // TODO: Get rid of .to_string()?
-            // Possible idea (needs to be verified with a benchmark):
-            // fxhash::hash(current_deinflection.word.as_bytes()),
-            current_deinflection.get_word().to_string(),
+            fxhash::hash(current_deinflection.word.as_bytes()),
             current_deinflection.get_types().as_ptr(),
         );
 
