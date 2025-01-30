@@ -123,12 +123,19 @@ pub fn deinflect_one_iteration(deinflected_word: &DeinflectedWord) -> Vec<Deinfl
 }
 
 /// Returns a list of possible deinflections for the given word.
+/// It doesn't guarantee that the returned deinflections are actual Japanese words, but if
+/// the words would exist, they would be deinflected correctly.
 ///
 /// # Examples
 /// ```
 /// use jp_deinflector::deinflect;
 /// let deinflections = deinflect("食べさせられなかった");
 /// assert!(deinflections.iter().any(|w| w == "食べる"));
+///
+/// let deinflections = deinflect("待った");
+/// assert!(deinflections.iter().any(|w| w == "待つ"));
+/// assert!(deinflections.iter().any(|w| w == "待う"));
+/// assert!(deinflections.iter().any(|w| w == "待る"));
 /// ```
 pub fn deinflect(word: &str) -> Vec<String> {
     let mut seen_checker = SeenWordsTracker::new();

@@ -11,13 +11,15 @@ maximum performance.
 Currently, it has a function `deinflect(word: &str) -> Vec<String>` 
 that will output a list of **possible** deinflections 
 for the input word. Since it doesn't do any dictionary lookups,
-the list may (and will) contain false deinflections.
-
-There is also a function `kata_to_hira(kata: &str)` that converts
-all katakana characters in `kata` into their hiragana counterparts.
+it cannot guarantee that the returned words are actual Japanese words, but
+the deinflection will always be correct (i.e. if the word were to be a real word
+it would be deinflected correctly).
 
 This crate is meant for use in dictionary applications to obtain a list of
 possible deinflections that can then be looked up in a dictionary.
+
+There is also a function `kata_to_hira(kata: &str)` that converts
+all katakana characters in `kata` into their hiragana counterparts.
 
 ## Performance
 This crate uses a perfect hash table to store the deinflection rules, 
