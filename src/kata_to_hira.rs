@@ -17,7 +17,7 @@ pub fn kata_to_hira(kata: &str) -> String {
 /// (won't matter for deinflection anyway though)
 fn is_katakana(c: char) -> bool {
     let cp = c as u32;
-    cp >= 0x30A1 && cp <= 0x30F6
+    (0x30A1..=0x30F6).contains(&cp)
 }
 
 fn katakana_char_to_hira(c: char) -> char {

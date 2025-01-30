@@ -111,7 +111,7 @@ pub fn deinflect_one_iteration(deinflected_word: &DeinflectedWord) -> Vec<Deinfl
     let mut results = Vec::new();
     for suffix in capped_suffixes(deinflected_word.get_word()) {
         if let Some(rules) = DEINFLECTION_RULES.get(suffix) {
-            for rule in rules.into_iter() {
+            for rule in rules.iter() {
                 if let Some(deinflected) = rule.apply(deinflected_word, suffix.len()) {
                     results.push(DeinflectedWord::new(deinflected, rule.rules_out));
                 }
