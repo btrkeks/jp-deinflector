@@ -1,5 +1,5 @@
-use crate::deinflect::RuleType::AdjI;
 use crate::deinflection_rules::{DEINFLECTION_RULES, MAX_SUFFIX_LENGTH};
+use crate::kata_to_hira::kata_to_hira;
 use fxhash::FxHashSet;
 
 fn concatenate(a: &str, b: &str) -> String {
@@ -22,16 +22,6 @@ pub enum RuleType {
     Vz,
 }
 
-impl RuleType {
-    pub fn is_verb(&self) -> bool {
-        !AdjI.eq(self)
-    }
-
-    pub fn is_adjective(&self) -> bool {
-        AdjI.eq(self)
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct DeinflectionRule {
     pub kana_out: &'static str,
@@ -41,11 +31,13 @@ pub struct DeinflectionRule {
 
 impl DeinflectionRule {
     fn can_apply_to(&self, word: &DeinflectedWord) -> bool {
+        // Case: don't know what type the word might have -> Can apply all rules
         word.get_types().is_empty()
-                // If we know what the type might be, it should match
+            // Case: Assume word to be one of the types in word.types -> Apply only fitting rules
             || self.rules_in.iter().any(|r| word.types.contains(r))
     }
 
+    /// Applies the rule to `deinflected_word` if its types allow it to
     pub fn apply(&self, deinflected_word: &DeinflectedWord, suffix_len: usize) -> Option<String> {
         if self.can_apply_to(deinflected_word) {
             let word = deinflected_word.get_word();
@@ -76,19 +68,11 @@ impl DeinflectedWord {
     pub fn get_types(&self) -> &'static [RuleType] {
         self.types
     }
-
-    pub fn could_be_verb(&self) -> bool {
-        self.types.iter().any(|t| t.is_verb())
-    }
-
-    pub fn could_be_adjective(&self) -> bool {
-        self.types.iter().any(|t| t.is_adjective())
-    }
 }
 
 /// Tracks words that have already been seen to avoid infinite loops
 struct SeenWordsTracker {
-    seen: FxHashSet<(usize, *const RuleType)>,
+    seen: FxHashSet<usize>,
 }
 
 impl SeenWordsTracker {
@@ -98,12 +82,9 @@ impl SeenWordsTracker {
         }
     }
 
-    /// Returns try if the word is
+    /// Returns try if the word hasn't been seen before
     pub fn check_is_new(&mut self, word: &DeinflectedWord) -> bool {
-        let key = (
-            fxhash::hash(word.word.as_bytes()),
-            word.get_types().as_ptr(),
-        );
+        let key = fxhash::hash(word.word.as_bytes());
         self.seen.insert(key)
     }
 }
@@ -128,7 +109,6 @@ fn capped_suffixes(word: &str) -> impl Iterator<Item = &str> {
 /// Performs a single deinflect operation, e.g.: 食べさせられたくなかった -> 食べさせられたくない
 pub fn deinflect_one_iteration(deinflected_word: &DeinflectedWord) -> Vec<DeinflectedWord> {
     let mut results = Vec::new();
-
     for suffix in capped_suffixes(deinflected_word.get_word()) {
         if let Some(rules) = DEINFLECTION_RULES.get(suffix) {
             for rule in rules.into_iter() {
@@ -148,12 +128,13 @@ pub fn deinflect_one_iteration(deinflected_word: &DeinflectedWord) -> Vec<Deinfl
 /// ```
 /// use jp_deinflector::deinflect;
 /// let deinflections = deinflect("食べさせられなかった");
-/// assert!(deinflections.iter().map(|s| s.get_word()).any(|w| w == "食べる"));
+/// assert!(deinflections.iter().any(|w| w == "食べる"));
 /// ```
-pub fn deinflect(word: &str) -> Vec<DeinflectedWord> {
-    let initial = DeinflectedWord::new(word.to_string(), &[]);
-    let mut deinflections = deinflect_one_iteration(&initial);
+pub fn deinflect(word: &str) -> Vec<String> {
     let mut seen_checker = SeenWordsTracker::new();
+
+    let initial = DeinflectedWord::new(kata_to_hira(word), &[]);
+    let mut deinflections = deinflect_one_iteration(&initial);
 
     let mut i = 0;
     while i < deinflections.len() {
@@ -166,6 +147,9 @@ pub fn deinflect(word: &str) -> Vec<DeinflectedWord> {
     }
 
     deinflections
+        .into_iter()
+        .map(|deinflection| deinflection.word)
+        .collect()
 }
 
 #[cfg(test)]
@@ -174,7 +158,7 @@ mod tests {
 
     fn assert_deinflects_to(input: &str, expected: &str) {
         let result = deinflect(input);
-        let deinflected = result.iter().map(|s| s.get_word()).collect::<Vec<&str>>();
+        let deinflected = result.iter().map(|s| &**s).collect::<Vec<&str>>();
         assert!(
             deinflected.contains(&expected),
             "Input '{}' did not deinflect to '{}'. Results: {:?}",
@@ -186,7 +170,7 @@ mod tests {
 
     fn assert_does_not_deinflect_to(input: &str, not_expected: &str) {
         let results = deinflect(input);
-        let deinflected: Vec<&str> = results.iter().map(|s| s.get_word()).collect();
+        let deinflected: Vec<&str> = results.iter().map(|s| &**s).collect();
         assert!(
             !deinflected.contains(&not_expected),
             "Input '{}' unexpectedly deinflected to '{}'. Results: {:?}",
@@ -650,6 +634,8 @@ mod tests {
     fn test_wrong_deinflections() {
         assert_does_not_deinflect_to("白ける", "白い");
         assert_does_not_deinflect_to("とぼけた", "とぶ");
+        assert_does_not_deinflect_to("ねたんだり", "ねつ");
+        assert_does_not_deinflect_to("とぼけた", "とぶ");
     }
 
     #[test]
@@ -809,6 +795,21 @@ mod tests {
         for case in cases {
             assert_deinflects_to(case, "する");
         }
+    }
+
+    #[test]
+    fn test_containing_katakana() {
+        let cases = ["思ッタ", "思イタイ", "思ッテ", "思ワセル", "思ワセラレル"];
+
+        for case in cases {
+            assert_deinflects_to(case, "思う");
+        }
+    }
+
+    #[test]
+    fn test_problem_words() {
+        assert_deinflects_to("損なわれ", "損なう");
+        assert_deinflects_to("阻まれ", "阻む");
     }
 
     // jp-inflctions unfortunately produces wrong inflections, which is why this is unusable

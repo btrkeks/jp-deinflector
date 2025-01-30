@@ -2361,13 +2361,8 @@ rules_out: &[RuleType::V5],
         DeinflectionRule {
             kana_out: "る",
             rules_in: &[RuleType::V1],
-            rules_out: &[RuleType::V5],
-        },
-        DeinflectionRule {
-            kana_out: "る",
-            rules_in: &[RuleType::V1],
-            rules_out: &[RuleType::V1],
-        },
+            rules_out: &[RuleType::V5, RuleType::V1],
+        }
     ],
     "じされる" => &[
         DeinflectionRule {
