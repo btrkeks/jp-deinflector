@@ -12,6 +12,9 @@ pub fn kata_to_hira(kata: &str) -> String {
         .collect()
 }
 
+/// Officially kata is the range 30A0-30FF (https://www.unicode.org/charts/PDF/U30A0.pdf),
+/// but I am not sure if something like '゠' or 'ヿ' should be converted too
+/// (won't matter for deinflection anyway though)
 fn is_katakana(c: char) -> bool {
     let cp = c as u32;
     cp >= 0x30A1 && cp <= 0x30F6
