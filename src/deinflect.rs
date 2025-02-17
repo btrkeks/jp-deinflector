@@ -130,10 +130,11 @@ pub fn deinflect_one_iteration(deinflected_word: &DeinflectedWord) -> Vec<Deinfl
 /// assert!(deinflections.iter().any(|w| w == "待る"));
 /// ```
 pub fn deinflect(word: &str) -> Vec<String> {
-    let mut seen_checker = SeenWordsTracker::new();
-
     let initial = DeinflectedWord::new(kata_to_hira(word), &[]);
     let mut deinflections = deinflect_one_iteration(&initial);
+
+    let mut seen_checker = SeenWordsTracker::new();
+    seen_checker.check_is_new(&initial);
 
     let mut i = 0;
     while i < deinflections.len() {
