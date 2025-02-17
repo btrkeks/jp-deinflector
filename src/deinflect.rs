@@ -94,16 +94,8 @@ impl SeenWordsTracker {
 /// (Otherwise there is nothing to deflect anyway, so it doesn't matter if this function breaks)
 fn capped_suffixes(word: &str) -> impl Iterator<Item = &str> {
     let max_suffix_bytes = MAX_SUFFIX_LENGTH * 3; // each jap character is 3 bytes
-
-    let start_pos = if word.len() > max_suffix_bytes {
-        word.len() - max_suffix_bytes
-    } else {
-        0
-    };
-
-    (start_pos..word.len())
-        .step_by(3)
-        .filter_map(move |i| word.get(i..))
+    let start_pos = word.len().saturating_sub(max_suffix_bytes);
+    (start_pos..word.len()).step_by(3).map(|i| &word[i..])
 }
 
 /// Performs a single deinflect operation, e.g.: 食べさせられたくなかった -> 食べさせられたくない
