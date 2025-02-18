@@ -4,7 +4,11 @@ use phf::phf_map;
 // This is maximum number of suffix lengths that we check against this list
 pub const MAX_SUFFIX_LENGTH: usize = 7;
 
-pub static DEINFLECTION_RULES: phf::Map<&'static str, &'static [DeinflectionRule]> = phf_map! {
+pub fn get_deinflection_rules(suffix: &str) -> Option<&'static [DeinflectionRule]> {
+    *DEINFLECTION_RULES.get(suffix)
+}
+
+static DEINFLECTION_RULES: phf::Map<&'static str, &'static [DeinflectionRule]> = phf_map! {
     "ければ" => &[
         DeinflectionRule {
             kana_out: "い",

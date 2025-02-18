@@ -1,4 +1,4 @@
-use crate::deinflection_rules::{DEINFLECTION_RULES, MAX_SUFFIX_LENGTH};
+use crate::deinflection_rules::{get_deinflection_rules, MAX_SUFFIX_LENGTH};
 use crate::kata_to_hira::kata_to_hira;
 use fxhash::FxHashSet;
 
@@ -102,7 +102,7 @@ fn capped_suffixes(word: &str) -> impl Iterator<Item = &str> {
 pub fn deinflect_one_iteration(deinflected_word: &DeinflectedWord) -> Vec<DeinflectedWord> {
     let mut results = Vec::new();
     for suffix in capped_suffixes(deinflected_word.get_word()) {
-        if let Some(rules) = DEINFLECTION_RULES.get(suffix) {
+        if let Some(rules) = get_deinflection_rules(suffix) {
             for rule in rules.iter() {
                 if let Some(deinflected) = rule.apply(deinflected_word, suffix.len()) {
                     results.push(DeinflectedWord::new(deinflected, rule.rules_out));
