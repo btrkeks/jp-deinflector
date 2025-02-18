@@ -7,8 +7,8 @@ description = "A package for deinflecting Japanese words"
 repository = "https://github.com/btrkeks/jp-deinflector"
 
 [dependencies]
-phf = { version = "0.11.3", features = ["macros"] }
 ccl-fxhash = "3.0.0"
+hashify = "0.2.6"
 
 [dev-dependencies]
 proptest = "1.6.0"
