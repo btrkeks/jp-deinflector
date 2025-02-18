@@ -1,7 +1,9 @@
 use crate::deinflect::{DeinflectionRule, RuleType};
 use phf::phf_map;
 
-pub const MAX_SUFFIX_LENGTH: usize = 7; // 1 Japanese character = 3 bytes
+// This is maximum number of suffix lengths that we check against this list
+pub const MAX_SUFFIX_LENGTH: usize = 7;
+
 pub static DEINFLECTION_RULES: phf::Map<&'static str, &'static [DeinflectionRule]> = phf_map! {
     "ければ" => &[
         DeinflectionRule {
