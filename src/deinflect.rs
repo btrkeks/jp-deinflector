@@ -2,6 +2,7 @@ use crate::deinflection_rules::{get_deinflection_rules, MAX_SUFFIX_LENGTH};
 use crate::kata_to_hira::kata_to_hira;
 use fxhash::FxHashSet;
 
+#[inline]
 fn concatenate(a: &str, b: &str) -> String {
     let mut str = String::with_capacity(a.len() + b.len());
     str.push_str(a);
@@ -82,7 +83,7 @@ impl SeenWordsTracker {
         }
     }
 
-    /// Returns try if the word hasn't been seen before
+    /// Returns true if the word hasn't been seen before
     pub fn check_is_new(&mut self, word: &DeinflectedWord) -> bool {
         let key = fxhash::hash(word.word.as_bytes());
         self.seen.insert(key)
