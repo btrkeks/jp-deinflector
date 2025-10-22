@@ -13,7 +13,7 @@ hashify = "0.2.6"
 [dev-dependencies]
 proptest = "1.6.0"
 # jp_inflections = "0.1.3" # unfortunately provides wrong inflections
-criterion = { version = "0.5.1", features = ["html_reports"] }
+criterion = { version = "0.7.0", features = ["html_reports"] }
 
 [[bench]]
 name = "benchmark"
