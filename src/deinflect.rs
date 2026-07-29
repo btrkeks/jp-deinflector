@@ -686,6 +686,25 @@ mod tests {
     }
 
     #[test]
+    fn test_deinflects_nai_contractions() {
+        let cases = [
+            ("覚えなきゃ", "覚える"),
+            ("覚えなくちゃ", "覚える"),
+            ("覚えなけりゃ", "覚える"),
+            ("書かなきゃ", "書く"),
+            ("待たなくちゃ", "待つ"),
+            ("しなきゃ", "する"),
+            ("来なきゃ", "来る"),
+            ("高くなきゃ", "高い"),
+            ("高くなくちゃ", "高い"),
+            ("高くなけりゃ", "高い"),
+        ];
+        for (input, expected) in cases {
+            assert_deinflects_to(input, expected);
+        }
+    }
+
+    #[test]
     fn test_get_suffixes() {
         let word = "走らされている";
         let suffixes: Vec<&str> = capped_suffixes(word).collect();

@@ -2187,6 +2187,30 @@ pub fn get_deinflection_rules(suffix: &str) -> Option<&'static [DeinflectionRule
                 rules_out: &[RuleType::V1],
             },
         ],
+        // Colloquial contractions of the negative conditional なければ
+        // (なきゃ/なけりゃ) and of なくては (なくちゃ): normalized to ない so
+        // the regular ない rules can chain.
+        "なきゃ" => &[
+            DeinflectionRule {
+                kana_out: "ない",
+                rules_in: &[],
+                rules_out: &[RuleType::AdjI],
+            },
+        ],
+        "なくちゃ" => &[
+            DeinflectionRule {
+                kana_out: "ない",
+                rules_in: &[],
+                rules_out: &[RuleType::AdjI],
+            },
+        ],
+        "なけりゃ" => &[
+            DeinflectionRule {
+                kana_out: "ない",
+                rules_in: &[],
+                rules_out: &[RuleType::AdjI],
+            },
+        ],
         "かない" => &[
             DeinflectionRule {
                 kana_out: "く",
